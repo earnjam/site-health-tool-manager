@@ -49,32 +49,56 @@ add_filter( 'site_status_tests', 'shtm_filter_tests', 10000 );
 /**
  * Output for the Site Health Tool Settings page
  */
-function shtm_settings_page() {
+function shtm_settings_page() { ?>
+
+	<div class="wrap">
+		<h1><?php _e( 'Site Health Tool Settings', 'site-health-tool-manager' ); ?></h1>
+
+	<?php
+	// Verify user has proper capability to view this page
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( __( 'Sorry, you are not allowed to manage Site Health tests for this site.', 'site-health-tool-manager' ) );
+	}
+
 	include ABSPATH . 'wp-admin/includes/class-wp-site-health.php';
 	$tests    = WP_Site_Health::get_tests();
 	$disabled = get_option( 'shtm_hidden_tests', array() );
 	$enabled  = array();
+
+	// If tests have been submitted, process the form data
 	if ( isset( $_POST['checked'] ) ) {
-		//Validate that submitted tests are actually registered
-		$test_names = array_merge( $tests['direct'], $tests['async'] );
-		foreach ( $_POST['checked'] as $name ) {
-			if ( isset( $test_names[ $name ] ) ) {
-				$enabled[] = $name;
+
+		// Verify form nonce before saving
+		if ( isset( $_POST['shtm-disable-tests-nonce'] ) && wp_verify_nonce( $_POST['shtm-disable-tests-nonce'], 'shtm-disable-tests' ) ) {
+
+			// Validate that submitted tests are actually registered
+			$test_names = array_merge( $tests['direct'], $tests['async'] );
+			foreach ( $_POST['checked'] as $name ) {
+				if ( isset( $test_names[ $name ] ) ) {
+					$enabled[] = $name;
+				}
 			}
+
+			// Only save the list of which tests were not checked.
+			// This ensures that any tests that are added after this setting is
+			// saved will still get run.
+			$new_disabled = array_keys( array_diff_key( $test_names, array_flip( $enabled ) ) );
+			update_option( 'shtm_hidden_tests', $new_disabled );
+			$disabled = $new_disabled;
+
+		} else {
+			// Invalid or missing nonce
+			$classes = 'notice notice-error is-dismissible';
+			$message = __( 'Unable to submit this form, please try again. Your changes have not been saved.', 'site-health-tool-manager' );
+			printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $classes ), esc_html( $message ) );
+
 		}
-		//Only save the list of which tests were not checked.
-		//This ensures that any tests that are added after this setting is
-		//saved will still get run.
-		$new_disabled = array_keys( array_diff_key( $test_names, array_flip( $enabled ) ) );
-		update_option( 'shtm_hidden_tests', $new_disabled );
-		$disabled = $new_disabled;
 	}
 	?>
-<div class="wrap">
-	<h1><?php _e( 'Site Health Tool Settings', 'site-health-tool-manager' ); ?></h1>
 	<h2><?php _e( 'Tests Enabled', 'site-health-tool-manager' ); ?></h2>
 	<p><?php _e( 'Certain tests may not be relevant to your environment. Uncheck a test to remove it from the Site Health Status screen.', 'site-health-tool-manager' ); ?></p>
 	<form method="POST" action="">
+		<?php wp_nonce_field( 'shtm-disable-tests', 'shtm-disable-tests-nonce' ); ?>
 		<ul>
 		<?php
 		foreach ( $tests as $type ) {
