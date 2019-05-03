@@ -86,6 +86,10 @@ function shtm_settings_page() { ?>
 			update_option( 'shtm_hidden_tests', $new_disabled );
 			$disabled = $new_disabled;
 
+			$classes = 'notice notice-success is-dismissible';
+			$message = __( 'Settings saved.', 'site-health-tool-manager' );
+			printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $classes ), esc_html( $message ) );
+
 		} else {
 			// Invalid or missing nonce
 			$classes = 'notice notice-error is-dismissible';
