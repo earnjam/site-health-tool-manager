@@ -15,6 +15,8 @@ Depending on your server setup, there may be tests in the WordPress Site Health 
 
 This plugin adds a simple settings page to exclude those tests from the Site Health Status page.
 
+> **Note:** This should *only* be used to disable tests with a legitimate and acceptable reason for failing. It should ***not*** be used to hide tests which can be fixed.
+
 = Credits =
 Icon from the [Geometric Hearts Valentine's Day icon set](https://www.iconfinder.com/icons/4174309/geometric_heart_heartbeat_hearts_love_valentine_icon) by [Katerine Melina (Abstracto Create)](https://www.iconfinder.com/Abstracto-create) and licensed under [CC by 3.0](https://creativecommons.org/licenses/by/3.0/).
 
