@@ -113,8 +113,8 @@ function shtm_settings_page() { ?>
 				if ( $checked ) {
 					echo 'checked="checked" ';
 				}
-				echo 'name="checked[]" id="' . $details['test'] . '" value="' . $test . '" />';
-				echo '<label for="' . $details['test'] . '">' . $details['label'] . '</label></li>';
+				echo 'name="checked[]" id="' . $test . '" value="' . $test . '" />';
+				echo '<label for="' . $test . '">' . $details['label'] . '</label></li>';
 			}
 		}
 		?>
