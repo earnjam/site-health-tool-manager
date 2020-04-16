@@ -124,3 +124,5 @@ function shtm_settings_page() { ?>
 </div>
 	<?php
 }
+
+// Token file change to test github readme/assets updater action
