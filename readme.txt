@@ -26,3 +26,15 @@ Icon from the [Geometric Hearts Valentine's Day icon set](https://www.iconfinder
 1. Example of some failing Site Health tests
 2. Disable the tests that aren't needed
 3. Disabled tests are not run on the Site Health screen
+
+== Changelog ==
+
+1.1
+- Adds ability to disable the Dashboard widget
+- Fixes fatal error in WP 5.4
+
+1.0.1
+- Fix issue for plugins that use closures for test callbacks
+
+1.0
+- Initial Release
