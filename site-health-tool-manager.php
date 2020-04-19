@@ -47,6 +47,18 @@ function shtm_filter_tests( $tests ) {
 add_filter( 'site_status_tests', 'shtm_filter_tests', 10000 );
 
 /**
+ * Disable the dashboard widget
+ */
+function shtm_filter_dashboard_widget() {
+	if ( ! get_option( 'shtm_widget_enabled', 1 ) ) {
+		global $wp_meta_boxes;
+		unset( $wp_meta_boxes['dashboard']['normal']['core']['dashboard_site_health'] );
+	}
+}
+add_action( 'wp_dashboard_setup', 'shtm_filter_dashboard_widget' );
+
+
+/**
  * Output for the Site Health Tool Settings page
  */
 function shtm_settings_page() { ?>
@@ -63,10 +75,11 @@ function shtm_settings_page() { ?>
 	include_once ABSPATH . 'wp-admin/includes/class-wp-site-health.php';
 	$tests    = WP_Site_Health::get_tests();
 	$disabled = get_option( 'shtm_hidden_tests', array() );
+	$widget   = get_option( 'shtm_widget_enabled', 1 );
 	$enabled  = array();
 
 	// If tests have been submitted, process the form data
-	if ( isset( $_POST['checked'] ) ) {
+	if ( isset( $_POST['submit'] ) ) {
 
 		// Verify form nonce before saving
 		if ( isset( $_POST['shtm-disable-tests-nonce'] ) && wp_verify_nonce( $_POST['shtm-disable-tests-nonce'], 'shtm-disable-tests' ) ) {
@@ -86,6 +99,9 @@ function shtm_settings_page() { ?>
 			update_option( 'shtm_hidden_tests', $new_disabled );
 			$disabled = $new_disabled;
 
+			$widget = ( isset( $_POST['widget'] ) ) ? 1 : 0;
+			update_option( 'shtm_widget_enabled', $widget );
+
 			$classes = 'notice notice-success is-dismissible';
 			$message = __( 'Settings saved.', 'site-health-tool-manager' );
 			printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $classes ), esc_html( $message ) );
@@ -99,27 +115,42 @@ function shtm_settings_page() { ?>
 		}
 	}
 	?>
-	<h2><?php _e( 'Tests Enabled', 'site-health-tool-manager' ); ?></h2>
-	<p><?php _e( 'Certain tests may not be relevant to your environment. Uncheck a test to remove it from the Site Health Status screen.', 'site-health-tool-manager' ); ?></p>
 	<form method="POST" action="">
-		<?php wp_nonce_field( 'shtm-disable-tests', 'shtm-disable-tests-nonce' ); ?>
-		<ul>
-		<?php
-		foreach ( $tests as $type ) {
-			$checked = false;
-			foreach ( $type as $test => $details ) {
-				$checked = ( ! in_array( $test, $disabled ) );
-				echo '<li><input type="checkbox" ';
-				if ( $checked ) {
-					echo 'checked="checked" ';
+		<h2><?php _e( 'Tests Enabled', 'site-health-tool-manager' ); ?></h2>
+		<p><?php _e( 'Certain tests may not be relevant to your environment. Uncheck a test to remove it from the Site Health Status screen.', 'site-health-tool-manager' ); ?></p>
+			<?php wp_nonce_field( 'shtm-disable-tests', 'shtm-disable-tests-nonce' ); ?>
+			<ul>
+			<?php
+			foreach ( $tests as $type ) {
+				$checked = false;
+				foreach ( $type as $test => $details ) {
+					$checked = ( ! in_array( $test, $disabled ) );
+					echo '<li><input type="checkbox" ';
+					if ( $checked ) {
+						echo 'checked="checked" ';
+					}
+					echo 'name="checked[]" id="' . $test . '" value="' . $test . '" />';
+					echo '<label for="' . $test . '">' . $details['label'] . '</label></li>';
 				}
-				echo 'name="checked[]" id="' . $test . '" value="' . $test . '" />';
-				echo '<label for="' . $test . '">' . $details['label'] . '</label></li>';
 			}
-		}
-		?>
+			?>
+			</ul>
+		<h2><?php _e( 'Other Settings', 'site-health-tool-manager' ); ?></h2>
+		<ul>
+			<li>
+				<input type="checkbox" name="widget" id="widget-setting"
+					<?php
+					if ( $widget ) {
+						echo 'checked="checked"';
+					}
+					?>
+				/>
+				<label for="widget-setting"><?php _e( 'Dashboard Widget Enabled', 'site-health-tool-manager' ); ?></label>
+			</li>
 		</ul>
-		<input class="button button-primary" type="submit" value="<?php _e( 'Save Tests', 'site-health-tool-manager' ); ?>" />
+		<p>
+			<input class="button button-primary" type="submit" value="<?php _e( 'Save Settings', 'site-health-tool-manager' ); ?>" name="submit" />
+		</p>
 	</form>
 </div>
 	<?php
