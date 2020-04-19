@@ -3,7 +3,7 @@
  * Plugin Name: Site Health Tool Manager
  * Plugin URI:  https://github.com/earnjam/site-health-tool-manager
  * Description: Control which tests appear in the the Site Health Tool
- * Version:     1.0.1
+ * Version:     1.1
  * Author:      William Earnhardt
  * Author URI:  https://wearnhardt.com
  * License:     GPL2
