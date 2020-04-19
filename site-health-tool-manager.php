@@ -60,7 +60,7 @@ function shtm_settings_page() { ?>
 		wp_die( __( 'Sorry, you are not allowed to manage Site Health tests for this site.', 'site-health-tool-manager' ) );
 	}
 
-	include ABSPATH . 'wp-admin/includes/class-wp-site-health.php';
+	include_once ABSPATH . 'wp-admin/includes/class-wp-site-health.php';
 	$tests    = WP_Site_Health::get_tests();
 	$disabled = get_option( 'shtm_hidden_tests', array() );
 	$enabled  = array();
