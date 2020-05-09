@@ -162,7 +162,6 @@ function shtm_settings_page() { ?>
 					echo 'name="checked[]" id="' . $test . '" value="' . $test . '" />';
 					
 					// Fallback for tests that don't set label and/or use class-based checks
-					$label = $details['label'];
 					if ( isset( $details['label'] ) ) {
 						$label = $details['label'];
 					} else if ( is_array( $details ) ) { 
