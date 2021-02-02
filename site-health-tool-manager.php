@@ -3,7 +3,7 @@
  * Plugin Name: Site Health Tool Manager
  * Plugin URI:  https://github.com/earnjam/site-health-tool-manager
  * Description: Control which tests appear in the the Site Health Tool
- * Version:     1.2
+ * Version:     1.3
  * Author:      William Earnhardt
  * Author URI:  https://wearnhardt.com
  * License:     GPL2
@@ -34,7 +34,8 @@ add_action( 'admin_menu', 'shtm_add_settings_page', 10 );
  */
 function shtm_filter_tests( $tests ) {
 	// Don't filter on the plugin settings page
-	if ( get_current_screen()->base !== 'settings_page_shtm-settings' ) {
+	$scr = get_current_screen();
+	if ( property_exists($scr, 'base') !== true || $scr->base !== 'settings_page_shtm-settings' ) {
 		$hidden_tests = (array) maybe_unserialize( get_option( 'shtm_hidden_tests' ) );
 		foreach ( $hidden_tests as $test ) {
 			unset( $tests['direct'][ $test ] );
