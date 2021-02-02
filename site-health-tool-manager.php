@@ -3,7 +3,7 @@
  * Plugin Name: Site Health Tool Manager
  * Plugin URI:  https://github.com/earnjam/site-health-tool-manager
  * Description: Control which tests appear in the the Site Health Tool
- * Version:     1.1
+ * Version:     1.3
  * Author:      William Earnhardt
  * Author URI:  https://wearnhardt.com
  * License:     GPL2
@@ -34,7 +34,8 @@ add_action( 'admin_menu', 'shtm_add_settings_page', 10 );
  */
 function shtm_filter_tests( $tests ) {
 	// Don't filter on the plugin settings page
-	if ( get_current_screen()->base !== 'settings_page_shtm-settings' ) {
+	$scr = get_current_screen();
+	if ( property_exists($scr, 'base') !== true || $scr->base !== 'settings_page_shtm-settings' ) {
 		$hidden_tests = (array) maybe_unserialize( get_option( 'shtm_hidden_tests' ) );
 		foreach ( $hidden_tests as $test ) {
 			unset( $tests['direct'][ $test ] );
@@ -45,6 +46,25 @@ function shtm_filter_tests( $tests ) {
 	return $tests;
 }
 add_filter( 'site_status_tests', 'shtm_filter_tests', 10000 );
+
+/**
+ * Filters the list of PHP extension modules
+ *
+ * @param array $modules The array of PHP extension modules
+ * @return array The filtered list of modules.
+ */
+function shtm_filter_modules( $modules ) {
+	$hidden = get_option( 'shtm_hidden_modules' );
+
+	$hidden_modules = explode( ',', $hidden );
+
+	foreach ( $hidden_modules as $module ) {
+		if ( isset( $modules[$module] ) ) unset( $modules[$module] );
+	}
+
+	return $modules;
+}
+add_filter( 'site_status_test_php_modules', 'shtm_filter_modules', 10000 );
 
 /**
  * Disable the dashboard widget
@@ -76,6 +96,7 @@ function shtm_settings_page() { ?>
 	$tests    = WP_Site_Health::get_tests();
 	$disabled = get_option( 'shtm_hidden_tests', array() );
 	$widget   = get_option( 'shtm_widget_enabled', 1 );
+	$modules  = get_option( 'shtm_hidden_modules', '' );
 	$enabled  = array();
 
 	// If tests have been submitted, process the form data
@@ -86,11 +107,9 @@ function shtm_settings_page() { ?>
 
 			// Validate that submitted tests are actually registered
 			$test_names = array_merge( $tests['direct'], $tests['async'] );
-			if ( isset( $_POST['checked'] ) ) {
-				foreach ( $_POST['checked'] as $name ) {
-					if ( isset( $test_names[ $name ] ) ) {
-						$enabled[] = $name;
-					}
+			foreach ( $_POST['checked'] as $name ) {
+				if ( isset( $test_names[ $name ] ) ) {
+					$enabled[] = $name;
 				}
 			}
 
@@ -98,11 +117,21 @@ function shtm_settings_page() { ?>
 			// This ensures that any tests that are added after this setting is
 			// saved will still get run.
 			$new_disabled = array_keys( array_diff_key( $test_names, array_flip( $enabled ) ) );
-			update_option( 'shtm_hidden_tests', $new_disabled );
+			update_option( 'shtm_hidden_tests', $new_disabled, false );
 			$disabled = $new_disabled;
 
 			$widget = ( isset( $_POST['widget'] ) ) ? 1 : 0;
-			update_option( 'shtm_widget_enabled', $widget );
+			update_option( 'shtm_widget_enabled', $widget, false );
+
+			// Save option for excluding PHP extension modules
+			$modules = ( isset( $_POST['modules'] ) ) ? $_POST['modules'] : '';
+			
+			// Keep in mind checking for NUL when dealing with user input
+			// see https://st-g.de/2011/04/doing-filename-checks-securely-in-PHP
+			$modules = str_replace(chr(0), '', $modules);
+
+			$modules = sanitize_text_field($modules);			
+			update_option( 'shtm_hidden_modules', $modules, false );
 
 			$classes = 'notice notice-success is-dismissible';
 			$message = __( 'Settings saved.', 'site-health-tool-manager' );
@@ -132,7 +161,24 @@ function shtm_settings_page() { ?>
 						echo 'checked="checked" ';
 					}
 					echo 'name="checked[]" id="' . $test . '" value="' . $test . '" />';
-					echo '<label for="' . $test . '">' . $details['label'] . '</label></li>';
+					
+					// Fallback for tests that don't set label and/or use class-based checks
+					if ( isset( $details['label'] ) ) {
+						$label = $details['label'];
+					} else if ( is_array( $details ) ) { 
+						$label = __( 'Class', 'site-health-tool-manager' ) . ' ' . get_class( $details['test'][0] );					
+					} else {
+						$label = __( 'Function', 'site-health-tool-manager' ) . ' ' . $details['test'];
+					}
+					echo '<label for="' . $test . '">' . $label . '</label>';
+
+					// Option for excluding PHP extension modules
+					if ( $test == "php_extensions" ) {
+						echo '<br/><label for="modules">' . __( 'Exclude PHP Extensions', 'site-health-tool-manager' ) . '</label>&nbsp;&nbsp;';
+						echo '<input type="text" name="modules" size="50" value="' . esc_attr($modules) . '" />';
+					}
+					
+					echo '</li>';					
 				}
 			}
 			?>
