@@ -107,9 +107,11 @@ function shtm_settings_page() { ?>
 
 			// Validate that submitted tests are actually registered
 			$test_names = array_merge( $tests['direct'], $tests['async'] );
-			foreach ( $_POST['checked'] as $name ) {
-				if ( isset( $test_names[ $name ] ) ) {
-					$enabled[] = $name;
+			if ( isset( $_POST['checked'] ) ) {
+				foreach ( $_POST['checked'] as $name ) {
+					if ( isset( $test_names[ $name ] ) ) {
+						$enabled[] = $name;
+					}
 				}
 			}
 
